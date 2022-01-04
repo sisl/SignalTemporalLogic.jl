@@ -1,7 +1,7 @@
 # SignalTemporalLogic.jl
 This package can define _signal temporal logic_ (STL) formulas using the `@formula` macro and then check if the formulas satisfy a signal trace. It can also measure the _robustness_ of a trace through an STL formula and compute the gradient of the robustness (as well as an approximate gradient using smooth min and max functions).
 
-[![Pluto source](https://img.shields.io/badge/pluto-source/docs-4063D8)](https://sisl.github.io/SignalTemporalLogic.jl/notebooks/gda.html)
+[![Pluto source](https://img.shields.io/badge/pluto-source/docs-4063D8)](https://sisl.github.io/SignalTemporalLogic.jl/notebooks/stl.html)
 [![Build Status](https://github.com/sisl/SignalTemporalLogic.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/sisl/SignalTemporalLogic.jl/actions/workflows/CI.yml)
 <!-- [![codecov](https://codecov.io/gh/sisl/SignalTemporalLogic.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/sisl/SignalTemporalLogic.jl) -->
 
