@@ -566,12 +566,14 @@ function parse_formula(ex)
 			if typeof(core) == Bool
 				return :(Atomic(value=$(esc(core))))
 			else
-                if var ∈ (:⟺, :(==), :⟹, :∧, :∨)
+                if var ∈ (:⟺, :(==), :(!=), :⟹, :∧, :∨)
                     ϕ_ex, ψ_ex = split_junction(ex)
                     ϕ = parse_formula(ϕ_ex)
                     ψ = parse_formula(ψ_ex)
 					if var ∈ [:⟺, :(==)]
 						return :(Biconditional($ϕ, $ψ))
+					elseif var == :(==)
+						return :(Negation(Biconditional($ϕ, $ψ)))
 					elseif var == :⟹
                         return :(Implication($ϕ, $ψ))
                     elseif var == :∧
@@ -596,7 +598,10 @@ function parse_formula(ex)
 					elseif formula_type ∈ [:⟺, :(==)]
                         μ, c = split_predicate(ex)
 						return :(Conjunction(Negation(Predicate($(esc(μ)), $c)), Negation(FlippedPredicate($(esc(μ)), $c))))
-                    else
+					elseif formula_type == :(!=)
+                        μ, c = split_predicate(ex)
+						return :(Disjunction(FlippedPredicate($(esc(μ)), $c), Predicate($(esc(μ)), $c)))
+					else
                         error("No type for formula: $(formula_type) and var $(var)")
                     end
                 end
