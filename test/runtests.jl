@@ -43,6 +43,12 @@ md"""
 ## Truth
 """
 
+# ╔═╡ 09e292b6-d253-471b-9985-97485b8be5b6
+⊤(x)
+
+# ╔═╡ bfa42119-da7c-492c-ac80-83d9f765645e
+ρ(x[t], ⊤)
+
 # ╔═╡ 3846c63f-32e7-4f96-8e7a-ff62a5b5a21c
 md"""
 ## Predicate
@@ -145,6 +151,14 @@ md"""
 -  $\square$ always
 """
 
+# ╔═╡ ee8e2823-72bc-420d-8069-767a2c31bdec
+begin
+	@assert (false ⟹ false) == true
+    @assert (false ⟹ true) == true
+    @assert (true ⟹ false) == false
+    @assert (true ⟹ true) == true
+end
+
 # ╔═╡ 31317201-432b-47fa-818d-6690010788b0
 md"""
 # Min/Max Approximation Testing
@@ -155,19 +169,34 @@ md"""
 ## Minish/Maxish Testing
 """
 
+# ╔═╡ 0051fd25-f970-4706-a1b5-57e9ac04a766
+minish(1, 3)
+
 # ╔═╡ ead8d084-7e83-4908-b0cd-7a284aaa8c33
 mean(x), minimum(x), maximum(x)
 
 # ╔═╡ aee6eeb8-9f08-402a-8283-bdd19fa88894
 w = 0 # 150
 
+# ╔═╡ 7048bca5-a116-4af0-a601-32d7dd313d1d
+minish(x, w=w)
+
+# ╔═╡ 59507e0b-2955-4112-ab19-66ffe45e5a8f
+maxish(x, w=w)
+
 # ╔═╡ 86cb96ff-5291-4617-848f-36fc1181d122
 md"""
 ## Smooth Min/Max Testing
 """
 
+# ╔═╡ 034edeaf-8158-4bac-8db2-f41bcab44ba2
+smoothmax(x2), smoothmin(x2)
+
 # ╔═╡ 222eb11e-1b01-4050-8233-22ef24692c10
 maximum(x2), minimum(x2)
+
+# ╔═╡ 89704458-de6b-493f-bb74-491bea9dc877
+smoothmax(xᵢ for xᵢ in [1,2,3,4])
 
 # ╔═╡ 1681bbe3-0327-495c-a3e4-0fc34cc9f298
 md"""
@@ -179,6 +208,9 @@ md"""
 
 # ╔═╡ b70197e9-7cc1-44d0-82d8-96cfe3a5de76
 max.([1,2,3,4], [0,1,2,5])
+
+# ╔═╡ ea0be409-4fc6-42a8-a1d9-98aa8db843d6
+smoothmax.([1,2,3,4], [0,1,2,5])
 
 # ╔═╡ 084904b0-1c60-4358-8369-50d56c456b2a
 md"""
@@ -219,6 +251,13 @@ rpms
 
 # ╔═╡ d0b29940-303b-41ac-9313-ee290bde89c5
 signals = collect(zip(speeds, rpms))
+
+# ╔═╡ 61a54891-d15d-4747-bd29-ee9d3d24fb2e
+# Get the robustness at each time step.
+# Only works (correctly) when the interval is fully open [1, length].
+function ρ_overtime(x, ϕ)
+	return [ρ(x[1:t], ϕ) for t in 1:length(x)]
+end
 
 # ╔═╡ d143a411-7824-411c-be71-a7fb6b9745a5
 # with_terminal() do
@@ -291,13 +330,8 @@ begin
 	end
 
 	using SignalTemporalLogic
+	import SignalTemporalLogic: @formula # Pluto trigger
 end
-
-# ╔═╡ 09e292b6-d253-471b-9985-97485b8be5b6
-⊤(x)
-
-# ╔═╡ bfa42119-da7c-492c-ac80-83d9f765645e
-ρ(x[t], ⊤)
 
 # ╔═╡ c321f5cc-d35c-4ef9-9411-6bfec0ed4a70
 ϕ_predicate = @formula xₜ -> μ(xₜ) > 0.5;
@@ -471,9 +505,6 @@ end
 # ╔═╡ 83eda8b3-1cf0-44e1-91af-c2140e8c8f50
 ϕ_until(x2)
 
-# ╔═╡ 532cb215-740e-422a-8d36-0ecf8b7a528f
-ϕ_until
-
 # ╔═╡ 4a66d029-dfcb-4480-8807-88ce28289722
 ρ(x2, ϕ_until)
 
@@ -486,9 +517,6 @@ end
 # ╔═╡ d32bf800-51d5-455f-ab50-91bb31f67e83
 ∇ρ̃(x2, ϕ_until)
 
-# ╔═╡ c738c26d-10a7-488a-976e-cc5f69fc4526
-ρ(x, @formula 𝒰(2:4, xₜ -> xₜ > 0, xₜ -> -xₜ > 0))
-
 # ╔═╡ 26a3441c-9128-46c6-8b5a-6858d642509c
 begin
 	plot(1:length(x2), fill(ρ(x2, ϕ_until), length(x2)), label="ρ(x,ϕ)")
@@ -496,6 +524,24 @@ begin
 	plot!(1:length(x2), vec(∇ρ̃(x2, ϕ_until)), label="soft ∇ρ̃(x,ϕ; w=1)")
 	plot!(1:length(x2), vec(∇ρ̃(x2, ϕ_until; w=2)), label="soft ∇ρ̃(x,ϕ; w=2)")
 end
+
+# ╔═╡ 532cb215-740e-422a-8d36-0ecf8b7a528f
+ϕ_until
+
+# ╔═╡ e2a50d76-07df-40b6-9b82-0fddd3785208
+∇ρ(x2, ϕ_until)
+
+# ╔═╡ fe39c9df-ecc3-43ac-aa75-0a4ca704afb7
+ρ(x2, ϕ_until)
+
+# ╔═╡ 405f53c4-e273-42f8-9465-e70370d9ec5c
+∇ρ̃(x2, ϕ_until)
+
+# ╔═╡ cdbad3c0-375c-486f-86e9-991ce660f76e
+ρ̃(x,ϕ_until)
+
+# ╔═╡ c738c26d-10a7-488a-976e-cc5f69fc4526
+ρ(x, @formula 𝒰(2:4, xₜ -> xₜ > 0, xₜ -> -xₜ > 0))
 
 # ╔═╡ ab72fec1-8266-4064-8a58-6de08b318ada
 begin
@@ -515,29 +561,6 @@ end
 # ╔═╡ 4ee8c66a-394c-4ad1-aa69-7121835611bc
 ϕc2.(x_comb)
 
-# ╔═╡ ee8e2823-72bc-420d-8069-767a2c31bdec
-begin
-	@assert (false ⟹ false) == true
-    @assert (false ⟹ true) == true
-    @assert (true ⟹ false) == false
-    @assert (true ⟹ true) == true
-end
-
-# ╔═╡ 0051fd25-f970-4706-a1b5-57e9ac04a766
-minish(1, 3)
-
-# ╔═╡ 7048bca5-a116-4af0-a601-32d7dd313d1d
-minish(x, w=w)
-
-# ╔═╡ 59507e0b-2955-4112-ab19-66ffe45e5a8f
-maxish(x, w=w)
-
-# ╔═╡ 034edeaf-8158-4bac-8db2-f41bcab44ba2
-smoothmax(x2), smoothmin(x2)
-
-# ╔═╡ 89704458-de6b-493f-bb74-491bea9dc877
-smoothmax(xᵢ for xᵢ in [1,2,3,4])
-
 # ╔═╡ c5101fe8-6617-434e-817e-eeac1caa3170
 q = @formula ◊(xᵢ->μ(xᵢ) > 0.5)
 
@@ -553,20 +576,11 @@ q = @formula ◊(xᵢ->μ(xᵢ) > 0.5)
 # ╔═╡ 9f692e34-ecf1-44ae-8f99-68606e8a1b09
 ρ̃(x2,q)
 
-# ╔═╡ ea0be409-4fc6-42a8-a1d9-98aa8db843d6
-smoothmax.([1,2,3,4], [0,1,2,5])
+# ╔═╡ 0705ce64-9e9d-427e-8cdf-6d958a10c238
+∇ρ(x2, q)
 
-# ╔═╡ e2a50d76-07df-40b6-9b82-0fddd3785208
-∇ρ(x2, ϕ_until)
-
-# ╔═╡ fe39c9df-ecc3-43ac-aa75-0a4ca704afb7
-ρ(x2, ϕ_until)
-
-# ╔═╡ 405f53c4-e273-42f8-9465-e70370d9ec5c
-∇ρ̃(x2, ϕ_until)
-
-# ╔═╡ cdbad3c0-375c-486f-86e9-991ce660f76e
-ρ̃(x,ϕ_until)
+# ╔═╡ 38e9a99b-c89c-4973-9538-90d5c4bbb017
+∇ρ̃(x2, q)
 
 # ╔═╡ 4cce6436-76f7-4b19-831f-b0c63757c16e
 ϕ_md = @formula ¬(xₜ->mu3(xₜ) > 0) && ¬(xₜ->-mu3(xₜ) > 0)
@@ -585,13 +599,6 @@ transmission = @formula □(x -> x[1] < 120) ∧ □(x -> x[2] < 4750)
 
 # ╔═╡ fb56bf20-317b-41bc-b0ad-33fac8d54dc2
 transmission(signals)
-
-# ╔═╡ 61a54891-d15d-4747-bd29-ee9d3d24fb2e
-# Get the robustness at each time step.
-# Only works (correctly) when the interval is fully open [1, length].
-function ρ_overtime(x, ϕ)
-	return [ρ(x[1:t], ϕ) for t in 1:length(x)]
-end
 
 # ╔═╡ 01ea793a-52b4-45a8-b829-4b7acfb5b49d
 ρ_overtime(signals, transmission)
@@ -676,7 +683,7 @@ end
 # ╔═╡ 5ccc7a0f-c3b2-4429-9bd5-d7fd9bcb97b5
 @test begin
 	local upright = @formula s -> abs(s[1]) < π / 4
-	local ψ = @formula □(upright) # input anonymous function MUST be a Formula
+	local ψ = @eval @formula □($upright) # input anonymous function MUST be a Formula
 	ψ([π/10]) && !(ψ([π/3]))
 end
 
@@ -691,12 +698,6 @@ end
 	# Check if formula is satisfied
 	ϕ(x)
 end
-
-# ╔═╡ 0705ce64-9e9d-427e-8cdf-6d958a10c238
-∇ρ(x2, q)
-
-# ╔═╡ 38e9a99b-c89c-4973-9538-90d5c4bbb017
-∇ρ̃(x2, q)
 
 # ╔═╡ 450f79d5-3393-4aa0-85d6-9bbd8b0b3224
 IS_NOTEBOOK && TableOfContents()

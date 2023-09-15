@@ -536,14 +536,12 @@ end
 
 # ╔═╡ e44e21ed-36f6-4d2c-82bd-fa1575cc49f8
 function parse_formula(ex)
-	if ex isa Symbol
+	if ex isa Formula
+		return ex
+	elseif ex isa Symbol
 		local sym = string(ex)
 		return quote
-			if $ex isa Formula
-				$ex
-			else
-				error("Symbol `$($sym)` needs to be a Formula type.")
-			end
+			error("Symbol `$($sym)` needs to be a Formula type.")
 		end
 	elseif ex.head ∈ (:(&&), :(||))
         ϕ_ex, ψ_ex = split_junction(ex)
@@ -621,7 +619,7 @@ end
 
 # ╔═╡ 97adec7a-75fd-40b1-9e46-e302c1dd6b9e
 macro formula(ex)
-	parse_formula(ex)
+	return parse_formula(ex)
 end
 
 # ╔═╡ 7b96179d-1a55-42b4-a934-74b57a1d0cc6
