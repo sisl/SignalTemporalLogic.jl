@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.4
+# v0.19.27
 
 using Markdown
 using InteractiveUtils
@@ -247,6 +247,11 @@ neg_ex = Expr(:(->), :xₜ, :(¬(μ(xₜ) > 0.5)))
 
 # ╔═╡ 9ce4cb7e-7ec6-429d-99a8-e5c523c45ba9
 non_neg_ex = Expr(:(->), :xₜ, :(μ(xₜ) > 0.5))
+
+# ╔═╡ d0722372-8e7a-409a-abd6-088b9a49ec8b
+md"""
+# Variable testing
+"""
 
 # ╔═╡ 41dd7143-8783-45ea-9414-fa80b68b4a6c
 md"""
@@ -609,8 +614,11 @@ big_formula = @formula □(1:10, (xᵢ -> xᵢ[1] > 0.5) ⟹ ◊(3:5, xᵢ -> x�
 # ╔═╡ 5f18a00a-b7d0-482a-8201-0905b8857d90
 get_type = SignalTemporalLogic.parse_formula
 
+# ╔═╡ a5f918e4-81a7-410d-81b0-3a31acdff7ec
+@formula(xₜ -> true)
+
 # ╔═╡ f67bfa55-3d82-4783-8f8d-34288b05229c
-@test isa(@formula(xₜ -> true), Truth)
+@test isa(@formula(xₜ -> true), Atomic)
 
 # ╔═╡ fbf51c72-4e21-4918-a928-10defa4832dd
 @test isa(@formula(xₜ -> ¬(μ(xₜ) > 0.5)), Negation)
@@ -647,6 +655,30 @@ get_type = SignalTemporalLogic.parse_formula
 
 # ╔═╡ aea4bd82-6a4f-4347-b8f0-f0e2870c3401
 @test (@formula x->¬(x > 0))(x) == (@formula ¬(x->x > 0))(x)
+
+# ╔═╡ 473ef134-f689-4eeb-b4e9-d116cbda4101
+@test isa(@formula((xₜ -> xₜ > 0.5) ⟺ (xₜ -> xₜ < 1.0)), Biconditional)
+
+# ╔═╡ a087ed1a-ef52-423e-83c7-9669ff42ccc0
+@test begin
+	local ϕ = @formula(xₜ -> xₜ == 0.5)
+	ϕ(0.5) && !ϕ(1000)
+end
+
+# ╔═╡ 5833958c-53cb-4ed5-8416-97168f6425de
+function test_local_variable(λ)
+	return @eval @formula s->s > $λ # Note to interpolate variable with $
+end
+
+# ╔═╡ f725ac4b-d8b7-4955-bea0-f3d3d83265aa
+@test test_local_variable(1234).c == 1234
+
+# ╔═╡ 5ccc7a0f-c3b2-4429-9bd5-d7fd9bcb97b5
+@test begin
+	local upright = @formula s -> abs(s[1]) < π / 4
+	local ψ = @formula □(upright) # input anonymous function MUST be a Formula
+	ψ([π/10]) && !(ψ([π/3]))
+end
 
 # ╔═╡ c4f343f7-8c63-4f71-8f46-668675841de7
 @test begin
@@ -816,6 +848,7 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═61d62b0c-7ea9-4220-87aa-150d801d2f10
 # ╠═45e19fc0-5819-4df9-8eea-5460dcc5543b
 # ╠═5f18a00a-b7d0-482a-8201-0905b8857d90
+# ╠═a5f918e4-81a7-410d-81b0-3a31acdff7ec
 # ╠═f67bfa55-3d82-4783-8f8d-34288b05229c
 # ╠═fbf51c72-4e21-4918-a928-10defa4832dd
 # ╠═1d6af625-92a5-45bc-ade3-d0a3ace4b9f1
@@ -831,6 +864,12 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═9ce4cb7e-7ec6-429d-99a8-e5c523c45ba9
 # ╠═71027432-bc47-4de8-bb34-8a3e20e619b0
 # ╠═aea4bd82-6a4f-4347-b8f0-f0e2870c3401
+# ╠═473ef134-f689-4eeb-b4e9-d116cbda4101
+# ╠═a087ed1a-ef52-423e-83c7-9669ff42ccc0
+# ╟─d0722372-8e7a-409a-abd6-088b9a49ec8b
+# ╠═5833958c-53cb-4ed5-8416-97168f6425de
+# ╠═f725ac4b-d8b7-4955-bea0-f3d3d83265aa
+# ╠═5ccc7a0f-c3b2-4429-9bd5-d7fd9bcb97b5
 # ╟─41dd7143-8783-45ea-9414-fa80b68b4a6c
 # ╟─cc3e80a3-b3e6-46ab-888c-2b1795d8d3d4
 # ╠═c4f343f7-8c63-4f71-8f46-668675841de7

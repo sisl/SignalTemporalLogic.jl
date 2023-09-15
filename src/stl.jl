@@ -536,7 +536,16 @@ end
 
 # ╔═╡ e44e21ed-36f6-4d2c-82bd-fa1575cc49f8
 function parse_formula(ex)
-    if ex.head ∈ (:(&&), :(||))
+	if ex isa Symbol
+		local sym = string(ex)
+		return quote
+			if $ex isa Formula
+				$ex
+			else
+				error("Symbol `$($sym)` needs to be a Formula type.")
+			end
+		end
+	elseif ex.head ∈ (:(&&), :(||))
         ϕ_ex, ψ_ex = split_junction(ex)
         ϕ = parse_formula(ϕ_ex)
         ψ = parse_formula(ψ_ex)
@@ -546,7 +555,7 @@ function parse_formula(ex)
             return :(Disjunction($ϕ, $ψ))
         end
     else
-        var, body = ex.args
+		var, body = ex.args
         body = Base.remove_linenums!(body)
         if var ∈ [:◊, :□]
             ϕ_ex, I = split_temporal(ex)
@@ -612,7 +621,7 @@ end
 
 # ╔═╡ 97adec7a-75fd-40b1-9e46-e302c1dd6b9e
 macro formula(ex)
-	return parse_formula(ex)
+	parse_formula(ex)
 end
 
 # ╔═╡ 7b96179d-1a55-42b4-a934-74b57a1d0cc6
