@@ -19,14 +19,6 @@ using Statistics
 # ╔═╡ d06d3ce6-d13b-4ab6-bb66-8a07835e1ce7
 using LinearAlgebra
 
-# ╔═╡ f4ccd76d-fdf8-436a-83d3-5b062e45152e
-begin
-	using Random
-	Random.seed!(4)
-	speeds = rand(80:125, 10)
-	rpms = rand(4700:4755, 10)
-end
-
 # ╔═╡ d8a7facd-1ad8-413d-9037-054472fdc50f
 md"""
 # STL Formula Testing
@@ -208,8 +200,14 @@ md"""
 $$\square_{1,10} v < 120 \wedge \square_{1,5} \omega < 4750$$
 """
 
-# ╔═╡ 8ebb7717-7563-4202-ae47-2d6c6646a874
-# transmission = @formula □(1:10, x -> x[1] < 120) ∧ □(1:5, x -> x[2] < 4750)
+# ╔═╡ 88403601-59c3-4e67-9e02-90fdf5800e4a
+# transmission = @formula □(x -> x[1] < 120) ∧ □(x -> x[2] < 4750)
+
+# ╔═╡ f4ccd76d-fdf8-436a-83d3-5b062e45152e
+begin
+	speeds = Real[114, 117, 100, 96, 92, 88, 108, 101, 118, 119]
+	rpms = Real[4719, 4747, 4706, 4744, 4701, 4744, 4743, 4753, 4712, 4704]
+end
 
 # ╔═╡ 46036c23-797f-4f62-b9fa-64f43950747f
 speeds
@@ -219,6 +217,14 @@ rpms
 
 # ╔═╡ d0b29940-303b-41ac-9313-ee290bde89c5
 signals = collect(zip(speeds, rpms))
+
+# ╔═╡ 84496823-db6a-4070-b4e3-c8aff24c54a7
+function fill2size(arr, val, n)
+	while length(arr) < n
+		push!(arr, val)
+	end
+	return arr
+end
 
 # ╔═╡ d143a411-7824-411c-be71-a7fb6b9745a5
 # with_terminal() do
@@ -251,6 +257,11 @@ non_neg_ex = Expr(:(->), :xₜ, :(μ(xₜ) > 0.5))
 # ╔═╡ d0722372-8e7a-409a-abd6-088b9a49ec8b
 md"""
 # Variable testing
+"""
+
+# ╔═╡ fda28f2d-255f-4fd6-b08f-59d61c20eb08
+md"""
+# Junction testing
 """
 
 # ╔═╡ 41dd7143-8783-45ea-9414-fa80b68b4a6c
@@ -582,21 +593,23 @@ map(x->ρ(x, ϕ_md), X) # ρ.(X, ϕ) doesn't work
 # ╔═╡ 29b0e762-9b4e-4cde-adc3-9ead18115917
 map(x->ρ̃(x, ϕ_md), X) # ρ.(X, ϕ) doesn't work
 
-# ╔═╡ 88403601-59c3-4e67-9e02-90fdf5800e4a
-transmission = @formula □(x -> x[1] < 120) ∧ □(x -> x[2] < 4750)
+# ╔═╡ 8ebb7717-7563-4202-ae47-2d6c6646a874
+transmission = @formula □(1:10, x -> x[1] < 120) ∧ □(1:5, x -> x[2] < 4750)
 
 # ╔═╡ fb56bf20-317b-41bc-b0ad-33fac8d54dc2
-transmission(signals)
+@test transmission(signals)
 
 # ╔═╡ 61a54891-d15d-4747-bd29-ee9d3d24fb2e
 # Get the robustness at each time step.
-# Only works (correctly) when the interval is fully open [1, length].
 function ρ_overtime(x, ϕ)
-	return [ρ(x[1:t], ϕ) for t in 1:length(x)]
+	return [ρ(fill2size(x[1:t], (-Inf, -Inf), length(x)), ϕ) for t in 1:length(x)]
 end
 
 # ╔═╡ 01ea793a-52b4-45a8-b829-4b7acfb5b49d
 ρ_overtime(signals, transmission)
+
+# ╔═╡ 67d1440d-42f6-4255-ba27-d041b45fec78
+@test ρ(signals, transmission) == 1
 
 # ╔═╡ 324c7c0a-b627-46d3-945d-573c960d57e6
 ∇ρ(signals, transmission)
@@ -686,6 +699,27 @@ end
 @test_throws "Symbol " begin
 	local variable
 	local ψ = @formula □(variable)
+end
+
+# ╔═╡ aea96bbd-d006-4933-a8cb-5165a0158499
+@test begin
+	local conjunc_test = @formula s->(s[1] < 50) && (s[4] < 1)
+	conjunc_test([49, 0, 0, 0.9]) == true && conjunc_test([49, 0, 0, 1.1]) == false
+end
+
+# ╔═╡ 781e31e0-1688-48e0-9a22-b5aea40ffb87
+@test begin
+	local conjunc_test2 = @formula (s->s[1] < 50) && (s->s[4] < 1)
+	conjunc_test2([49, 0, 0, 0.9]) == true && conjunc_test2([49, 0, 0, 1.1]) == false
+end
+
+# ╔═╡ 6c843d45-4c30-4dcd-a30b-27a12c2e1195
+@test begin
+	local ϕ = @formula □(s->s[1] < 50 && s[4] < 1)
+	ϕ([[49, 0, 0, 0], [49, 0, 0, -1]]) &&
+	ϕ([(49, 0, 0, 0), (49, 0, 0, -1)]) &&
+	ϕ(([49, 0, 0, 0], [49, 0, 0, -1])) &&
+	ϕ(((49, 0, 0, 0), (49, 0, 0, -1)))
 end
 
 # ╔═╡ c4f343f7-8c63-4f71-8f46-668675841de7
@@ -845,8 +879,10 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═811f6836-e5c8-447f-aa26-dda644fecc1b
 # ╠═d0b29940-303b-41ac-9313-ee290bde89c5
 # ╠═fb56bf20-317b-41bc-b0ad-33fac8d54dc2
+# ╠═84496823-db6a-4070-b4e3-c8aff24c54a7
 # ╠═61a54891-d15d-4747-bd29-ee9d3d24fb2e
 # ╠═01ea793a-52b4-45a8-b829-4b7acfb5b49d
+# ╠═67d1440d-42f6-4255-ba27-d041b45fec78
 # ╠═324c7c0a-b627-46d3-945d-573c960d57e6
 # ╠═e0cc216e-8565-4ca5-8ee8-fe9516bc6c1a
 # ╠═d143a411-7824-411c-be71-a7fb6b9745a5
@@ -879,6 +915,10 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═f725ac4b-d8b7-4955-bea0-f3d3d83265aa
 # ╠═5ccc7a0f-c3b2-4429-9bd5-d7fd9bcb97b5
 # ╠═e2313bcd-dd8f-4ffd-ac1e-7e08304c37b5
+# ╟─fda28f2d-255f-4fd6-b08f-59d61c20eb08
+# ╠═aea96bbd-d006-4933-a8cb-5165a0158499
+# ╠═781e31e0-1688-48e0-9a22-b5aea40ffb87
+# ╠═6c843d45-4c30-4dcd-a30b-27a12c2e1195
 # ╟─41dd7143-8783-45ea-9414-fa80b68b4a6c
 # ╟─cc3e80a3-b3e6-46ab-888c-2b1795d8d3d4
 # ╠═c4f343f7-8c63-4f71-8f46-668675841de7

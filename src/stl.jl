@@ -459,6 +459,15 @@ md"""
 # Robustness helpers
 """
 
+# ╔═╡ 2dae8ed0-3bd6-44e1-a762-a75b5cc9f9f0
+is_conjunction(head) = head ∈ [:(&&), :∧]
+
+# ╔═╡ 7bc35b0b-fdbe-46d2-83c1-0c056772761e
+is_disjunction(head) = head ∈ [:(||), :∨]
+
+# ╔═╡ 512f0bdc-7e4c-4a01-ae68-adbd57d63cb0
+is_junction(head) = is_conjunction(head) || is_disjunction(head)
+
 # ╔═╡ 4bba7170-e7b7-4ccf-b6f4-a32b7ee4b809
 function split_lambda(λ)
 	var, body = λ.args
@@ -495,8 +504,16 @@ end
 
 # ╔═╡ 982ac681-79a0-4c69-a5cc-0546a5ebd3be
 function split_junction(ϕ_ψ)
-	ϕ, ψ = ϕ_ψ.args[end-1:end]
-	return ϕ, ψ
+	if ϕ_ψ.head == :(->)
+		var = ϕ_ψ.args[1]
+		head = ϕ_ψ.args[2].args[1].head
+		ϕ = Expr(:(->), var, ϕ_ψ.args[2].args[1].args[1])
+		ψ = Expr(:(->), var, ϕ_ψ.args[2].args[1].args[2])
+	else
+		head = ϕ_ψ.head
+		ϕ, ψ = ϕ_ψ.args[end-1:end]
+	end
+	return ϕ, ψ, head
 end
 
 # ╔═╡ 84effb59-b744-4bd7-b724-6f3e4056a737
@@ -536,6 +553,7 @@ end
 
 # ╔═╡ e44e21ed-36f6-4d2c-82bd-fa1575cc49f8
 function parse_formula(ex)
+	ex = Base.remove_linenums!(ex)
 	if ex isa Formula
 		return ex
 	elseif ex isa Symbol
@@ -543,16 +561,9 @@ function parse_formula(ex)
 		return quote
 			error("Symbol `$($sym)` needs to be a Formula type.")
 		end
-	elseif ex.head ∈ (:(&&), :(||))
-        ϕ_ex, ψ_ex = split_junction(ex)
-        ϕ = parse_formula(ϕ_ex)
-        ψ = parse_formula(ψ_ex)
-        if ex.head == :(&&)
-            return :(Conjunction($ϕ, $ψ))
-        elseif ex.head == :(||)
-            return :(Disjunction($ϕ, $ψ))
-        end
-    else
+	elseif is_junction(ex.head)
+		return parse_junction(ex)
+	else
 		var, body = ex.args
         body = Base.remove_linenums!(body)
         if var ∈ [:◊, :□]
@@ -569,49 +580,61 @@ function parse_formula(ex)
             ψ = parse_formula(ψ_ex)
             return :(Until($ϕ, $ψ, $I))
         else
-            core = body.head == :block ? body.args[end] : body
+			core = body.head == :block ? body.args[end] : body
 			if typeof(core) == Bool
 				return :(Atomic(value=$(esc(core))))
 			else
-                if var ∈ (:⟺, :(==), :(!=), :⟹, :∧, :∨)
-                    ϕ_ex, ψ_ex = split_junction(ex)
-                    ϕ = parse_formula(ϕ_ex)
-                    ψ = parse_formula(ψ_ex)
+				if is_junction(core.head)
+					return parse_junction(ex)
+				elseif var ∈ (:⟺, :(==), :(!=), :⟹) || is_junction(var)
+					ϕ_ex, ψ_ex, _ = split_junction(ex)
+					ϕ = parse_formula(ϕ_ex)
+					ψ = parse_formula(ψ_ex)
 					if var ∈ [:⟺, :(==)]
 						return :(Biconditional($ϕ, $ψ))
-					elseif var == :(==)
+					elseif var == :(!=)
 						return :(Negation(Biconditional($ϕ, $ψ)))
 					elseif var == :⟹
-                        return :(Implication($ϕ, $ψ))
-                    elseif var == :∧
-                        return :(Conjunction($ϕ, $ψ))
-                    elseif var == :∨
-                        return :(Disjunction($ϕ, $ψ))
-                    end
-                elseif var ∈ [:¬, :!]
-                    ϕ_inner = parse_formula(strip_negation(ex))
-                    return :(Negation($ϕ_inner))
-                else
-                    formula_type = core.args[1]
-                    if formula_type ∈ [:¬, :!]
-                        ϕ_inner = parse_formula(strip_negation(ex))
-                        return :(Negation($ϕ_inner))
-                    elseif formula_type == :>
-                        μ, c = split_predicate(ex)
-                        return :(Predicate($(esc(μ)), $c))
-                    elseif formula_type == :<
-                        μ, c = split_predicate(ex)
-                        return :(FlippedPredicate($(esc(μ)), $c))
+						return :(Implication($ϕ, $ψ))
+					elseif is_conjunction(var)
+						return :(Conjunction($ϕ, $ψ))
+					elseif is_disjunction(var)
+						return :(Disjunction($ϕ, $ψ))
+					end
+				elseif var ∈ [:¬, :!]
+					ϕ_inner = parse_formula(strip_negation(ex))
+					return :(Negation($ϕ_inner))
+				else
+					formula_type = core.args[1]
+					if formula_type ∈ [:¬, :!]
+						ϕ_inner = parse_formula(strip_negation(ex))
+						return :(Negation($ϕ_inner))
+					elseif formula_type == :>
+						μ, c = split_predicate(ex)
+						return :(Predicate($(esc(μ)), $c))
+					elseif formula_type == :<
+						μ, c = split_predicate(ex)
+						return :(FlippedPredicate($(esc(μ)), $c))
 					elseif formula_type ∈ [:⟺, :(==)]
-                        μ, c = split_predicate(ex)
+						μ, c = split_predicate(ex)
 						return :(Conjunction(Negation(Predicate($(esc(μ)), $c)), Negation(FlippedPredicate($(esc(μ)), $c))))
 					elseif formula_type == :(!=)
-                        μ, c = split_predicate(ex)
+						μ, c = split_predicate(ex)
 						return :(Disjunction(FlippedPredicate($(esc(μ)), $c), Predicate($(esc(μ)), $c)))
+					elseif is_junction(formula_type)
+						return parse_junction(ex)
 					else
-                        error("No type for formula: $(formula_type) and var $(var)")
-                    end
-                end
+						error("""
+						No formula parser for:
+							formula_type = $(formula_type)
+							var = $var
+							core = $core
+							core.head = $(core.head)
+							core.args = $(core.args)
+							body = $body
+							ex = $ex""")
+					end
+				end
             end
         end
     end
@@ -634,6 +657,20 @@ always = @formula ¬◊(¬(xₜ -> xₜ > 0))
 # ╔═╡ c1e17481-91c3-430f-99f3-1b328ec31417
 ⊥ = @formula xₜ -> false
 
+# ╔═╡ 40603feb-ebd6-47c6-97c4-c27b5211ff9e
+function parse_junction(ex)
+	ϕ_ex, ψ_ex, head = split_junction(ex)
+	ϕ = parse_formula(ϕ_ex)
+	ψ = parse_formula(ψ_ex)
+	if is_conjunction(head)
+		return :(Conjunction($ϕ, $ψ))
+	elseif is_disjunction(head)
+		return :(Disjunction($ϕ, $ψ))
+	else
+		error("No junction head for $(head).")
+	end
+end
+
 # ╔═╡ e16f2079-f028-46c6-b4e7-bf23fe9dcbfb
 md"""
 # Notebook
@@ -642,13 +679,13 @@ md"""
 # ╔═╡ c66d8ffa-44d0-4550-9456-870aae5db796
 IS_NOTEBOOK = @isdefined PlutoRunner
 
+# ╔═╡ 210d23f1-2374-4511-a012-852f1f2dc3be
+IS_NOTEBOOK && TableOfContents()
+
 # ╔═╡ eeabb14a-7ca8-4446-b3d6-39a41b5b452c
 if IS_NOTEBOOK
 	using PlutoUI
 end
-
-# ╔═╡ 210d23f1-2374-4511-a012-852f1f2dc3be
-IS_NOTEBOOK && TableOfContents()
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1247,6 +1284,10 @@ version = "17.4.0+0"
 # ╟─067dadb1-1312-4035-930c-65b1068f7013
 # ╠═97adec7a-75fd-40b1-9e46-e302c1dd6b9e
 # ╠═e44e21ed-36f6-4d2c-82bd-fa1575cc49f8
+# ╠═2dae8ed0-3bd6-44e1-a762-a75b5cc9f9f0
+# ╠═7bc35b0b-fdbe-46d2-83c1-0c056772761e
+# ╠═512f0bdc-7e4c-4a01-ae68-adbd57d63cb0
+# ╠═40603feb-ebd6-47c6-97c4-c27b5211ff9e
 # ╠═4bba7170-e7b7-4ccf-b6f4-a32b7ee4b809
 # ╠═15dc4645-b08e-4a5a-a65d-1858b948f324
 # ╠═b90947cb-2cbe-4410-abbe-4869b5caa313
