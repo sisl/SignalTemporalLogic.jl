@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.32
 
 using Markdown
 using InteractiveUtils
@@ -142,24 +142,13 @@ md"""
 # Min/Max Approximation Testing
 """
 
-# ╔═╡ ce7dcbba-9546-4b40-8e14-79f80865241b
-md"""
-## Minish/Maxish Testing
-"""
-
-# ╔═╡ ead8d084-7e83-4908-b0cd-7a284aaa8c33
-mean(x), minimum(x), maximum(x)
-
-# ╔═╡ aee6eeb8-9f08-402a-8283-bdd19fa88894
-w = 0 # 150
-
 # ╔═╡ 86cb96ff-5291-4617-848f-36fc1181d122
 md"""
 ## Smooth Min/Max Testing
 """
 
-# ╔═╡ 222eb11e-1b01-4050-8233-22ef24692c10
-maximum(x2), minimum(x2)
+# ╔═╡ daac79e3-5f16-49ff-9200-6ef1279eaf0d
+sm = [1,2,3,4,0.2]
 
 # ╔═╡ 1681bbe3-0327-495c-a3e4-0fc34cc9f298
 md"""
@@ -245,6 +234,9 @@ md"""
 # Unit Tests
 """
 
+# ╔═╡ bea105c3-14c9-411a-a125-d70f905fdf07
+x_stl = [1,2,3,4]
+
 # ╔═╡ 61d62b0c-7ea9-4220-87aa-150d801d2f10
 max.([1, 2, 3], [-1, -2, 4]) # broadcasting is important here!
 
@@ -303,7 +295,7 @@ begin
 
 	using SignalTemporalLogic
 	import SignalTemporalLogic: # Pluto triggers
-		@formula, ⊤, ⊥, minish, maxish, ⟹, smoothmax, smoothmin
+		@formula, ⊤, ⊥, ⟹, smoothmax, smoothmin
 end
 
 # ╔═╡ 09e292b6-d253-471b-9985-97485b8be5b6
@@ -413,6 +405,15 @@ end
 
 # ╔═╡ 53ef7008-3c1e-4fb6-9a8d-91796a9ea55e
 ρ̃(x, ϕ_always)
+
+# ╔═╡ 0ef85cb2-a2e5-4ebe-a27e-6b6177bf870f
+@test ρ(x, ϕ_always) == robustness(x, ϕ_always)
+
+# ╔═╡ 96a1a2f6-294f-4645-a53f-a67c30416aeb
+@test ρ̃(x, ϕ_always) == smooth_robustness(x, ϕ_always)
+
+# ╔═╡ 8235f0a4-87fd-4c5c-8d19-eb0e0d2e93a6
+smooth_robustness(x, ϕ_always)
 
 # ╔═╡ 52b8d155-dfcf-4f3a-a8e0-93399ef48b5c
 ∇ρ(x, ϕ_always)
@@ -536,20 +537,17 @@ begin
     @assert (true ⟹ true) == true
 end
 
-# ╔═╡ 0051fd25-f970-4706-a1b5-57e9ac04a766
-minish(1, 3)
+# ╔═╡ e9910277-56ea-44f0-b36e-a9f7e689b736
+@test smoothmin(sm; w=0) == minimum(sm)
 
-# ╔═╡ 7048bca5-a116-4af0-a601-32d7dd313d1d
-minish(x, w=w)
+# ╔═╡ f7e01cce-635a-4897-923e-f62127e784ef
+@test smoothmin(sm; w=Inf) == mean(sm)
 
-# ╔═╡ 59507e0b-2955-4112-ab19-66ffe45e5a8f
-maxish(x, w=w)
+# ╔═╡ 8a33e8ee-5ba7-4a00-9c0b-a2722f3d0c39
+@test smoothmax(sm; w=0) == maximum(sm)
 
-# ╔═╡ 034edeaf-8158-4bac-8db2-f41bcab44ba2
-smoothmax(x2), smoothmin(x2)
-
-# ╔═╡ 89704458-de6b-493f-bb74-491bea9dc877
-smoothmax(xᵢ for xᵢ in [1,2,3,4])
+# ╔═╡ eb2a96f7-7635-49de-a967-604658d4905d
+@test smoothmax(sm; w=Inf) == mean(sm)
 
 # ╔═╡ c5101fe8-6617-434e-817e-eeac1caa3170
 q = @formula ◊(xᵢ->μ(xᵢ) > 0.5)
@@ -616,6 +614,12 @@ end
 
 # ╔═╡ e0cc216e-8565-4ca5-8ee8-fe9516bc6c1a
 ∇ρ̃(signals, transmission)
+
+# ╔═╡ 3d155de2-0614-4561-b0f7-b5788c557539
+ϕ_stl = @formula □(x->x < 5)
+
+# ╔═╡ c69a2c61-ffe6-47d0-bda7-b12183a96d95
+STL.robustness(x_stl, ϕ_stl) == ρ(x_stl, ϕ_stl)
 
 # ╔═╡ 282fa1af-7670-4384-b303-3b5359a31fc0
 ρ(x, @formula □(1:3, (xₜ -> xₜ > 0.5) ⟹ ◊(xₜ -> xₜ > 0.5)))
@@ -795,6 +799,9 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═40269dfd-c968-431b-a74b-9956cafe6614
 # ╠═6da89434-ff90-4aa7-8c75-f578efc12009
 # ╠═53ef7008-3c1e-4fb6-9a8d-91796a9ea55e
+# ╠═0ef85cb2-a2e5-4ebe-a27e-6b6177bf870f
+# ╠═96a1a2f6-294f-4645-a53f-a67c30416aeb
+# ╠═8235f0a4-87fd-4c5c-8d19-eb0e0d2e93a6
 # ╠═52b8d155-dfcf-4f3a-a8e0-93399ef48b5c
 # ╠═d1051f1d-dc34-4e3d-bc85-71e738f1a835
 # ╠═6dd5301b-a641-4343-91d3-3b442bb7c90f
@@ -837,16 +844,12 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═ee8e2823-72bc-420d-8069-767a2c31bdec
 # ╟─31317201-432b-47fa-818d-6690010788b0
 # ╠═ab57fd9b-9bec-48fc-8530-483a5d4ddb11
-# ╟─ce7dcbba-9546-4b40-8e14-79f80865241b
-# ╠═0051fd25-f970-4706-a1b5-57e9ac04a766
-# ╠═ead8d084-7e83-4908-b0cd-7a284aaa8c33
-# ╠═aee6eeb8-9f08-402a-8283-bdd19fa88894
-# ╠═7048bca5-a116-4af0-a601-32d7dd313d1d
-# ╠═59507e0b-2955-4112-ab19-66ffe45e5a8f
 # ╟─86cb96ff-5291-4617-848f-36fc1181d122
-# ╠═034edeaf-8158-4bac-8db2-f41bcab44ba2
-# ╠═222eb11e-1b01-4050-8233-22ef24692c10
-# ╠═89704458-de6b-493f-bb74-491bea9dc877
+# ╠═daac79e3-5f16-49ff-9200-6ef1279eaf0d
+# ╠═e9910277-56ea-44f0-b36e-a9f7e689b736
+# ╠═f7e01cce-635a-4897-923e-f62127e784ef
+# ╠═8a33e8ee-5ba7-4a00-9c0b-a2722f3d0c39
+# ╠═eb2a96f7-7635-49de-a967-604658d4905d
 # ╟─1681bbe3-0327-495c-a3e4-0fc34cc9f298
 # ╠═c5101fe8-6617-434e-817e-eeac1caa3170
 # ╠═7ea907bd-d46e-42dc-8bfa-12264f9935b7
@@ -887,6 +890,9 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═e0cc216e-8565-4ca5-8ee8-fe9516bc6c1a
 # ╠═d143a411-7824-411c-be71-a7fb6b9745a5
 # ╟─3903012f-d2d9-4a8a-b246-ec778459a06e
+# ╠═3d155de2-0614-4561-b0f7-b5788c557539
+# ╠═bea105c3-14c9-411a-a125-d70f905fdf07
+# ╠═c69a2c61-ffe6-47d0-bda7-b12183a96d95
 # ╠═282fa1af-7670-4384-b303-3b5359a31fc0
 # ╠═7fe34fde-7a21-44bb-8965-d680cfed8aab
 # ╠═61d62b0c-7ea9-4220-87aa-150d801d2f10

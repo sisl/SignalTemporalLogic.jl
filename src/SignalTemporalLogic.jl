@@ -1,6 +1,9 @@
 module SignalTemporalLogic
 
+const STL = SignalTemporalLogic
+
 export
+    STL,
     ¬,
     ∧,
     ∨,
@@ -27,11 +30,9 @@ export
     robustness,
     smooth_robustness,
     TemporalOperator,
-    get_interval,
-    minish,
-    maxish,
     smoothmin,
     smoothmax,
+    get_interval,
     ∇ρ,
     ∇ρ̃,
     @formula
