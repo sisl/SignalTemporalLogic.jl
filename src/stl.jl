@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.32
+# v0.19.29
 
 using Markdown
 using InteractiveUtils
@@ -311,7 +311,7 @@ begin
 	(q::Conjunction)(x) = all(q.ϕ(x) .∧ q.ψ(x))
 
 	ρ(xₜ, q::Conjunction) = min.(ρ(xₜ, q.ϕ), ρ(xₜ, q.ψ))
-	ρ̃(xₜ, q::Conjunction) = smoothmin.(ρ̃(xₜ, q.ϕ), ρ̃(xₜ, q.ψ))
+	ρ̃(xₜ, q::Conjunction; w=W) = smoothmin.(ρ̃(xₜ, q.ϕ), ρ̃(xₜ, q.ψ); w)
 end
 
 # ╔═╡ 967af87a-d0d7-42ea-871d-492d9406f9c6
@@ -387,8 +387,8 @@ begin
 
 	ρ(xₜ, q::Biconditional) =
 		ρ(xₜ, Conjunction(Implication(q.ϕ, q.ψ), Implication(q.ψ, q.ϕ)))
-	ρ̃(xₜ, q::Biconditional) =
-		ρ̃(xₜ, Conjunction(Implication(q.ϕ, q.ψ), Implication(q.ψ, q.ϕ)))
+	ρ̃(xₜ, q::Biconditional; w=W) =
+		ρ̃(xₜ, Conjunction(Implication(q.ϕ, q.ψ), Implication(q.ψ, q.ϕ)); w)
 end
 
 # ╔═╡ d2e95e25-f1df-4807-bc41-fb7ebb7a3d55
@@ -438,8 +438,8 @@ begin
 	end
 end
 
-# ╔═╡ 7502b631-a7a1-4d2d-a881-7f1c8f685d66
-robustness = ρ
+# ╔═╡ d57941cf-655b-45f8-b5e2-b39d3cfeb9fb
+robustness(xₜ, ϕ::Formula; w=0) = w == 0 ? ρ(xₜ, ϕ) : ρ̃(xₜ, ϕ; w)
 
 # ╔═╡ 5c1e16b3-1b3c-4c7a-a484-44b935eaa2a9
 smooth_robustness = ρ̃
@@ -709,7 +709,7 @@ Zygote = "~0.6.67"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0"
+julia_version = "1.9.2"
 manifest_format = "2.0"
 project_hash = "b812503fc48fba4e7cb474f0de7cda4f60f8f461"
 
@@ -798,7 +798,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.2+0"
+version = "1.0.5+0"
 
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
@@ -1083,7 +1083,7 @@ version = "2.8.0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.9.0"
+version = "1.9.2"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -1260,7 +1260,7 @@ version = "0.2.4"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.7.0+0"
+version = "5.8.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1288,7 +1288,7 @@ version = "17.4.0+0"
 # ╟─8c2a500b-8d62-48a3-ac22-b6466858eef9
 # ╠═dc6bec3c-4ca0-457e-886d-0b2a3f8845e8
 # ╟─50e69922-f07e-48dd-981d-d68c8cd07f7f
-# ╠═7502b631-a7a1-4d2d-a881-7f1c8f685d66
+# ╠═d57941cf-655b-45f8-b5e2-b39d3cfeb9fb
 # ╠═5c1e16b3-1b3c-4c7a-a484-44b935eaa2a9
 # ╟─175946fd-9de7-4efb-811d-1b52d6444614
 # ╟─a7af8bca-1870-4ce5-8cce-9d9d04604f31

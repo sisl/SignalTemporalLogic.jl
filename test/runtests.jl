@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.32
+# v0.19.29
 
 using Markdown
 using InteractiveUtils
@@ -549,6 +549,12 @@ end
 # ╔═╡ eb2a96f7-7635-49de-a967-604658d4905d
 @test smoothmax(sm; w=Inf) == mean(sm)
 
+# ╔═╡ e28af833-ebc3-4767-a5ba-0c2f5dbbc028
+@test robustness(x, ϕ_always; w=Inf) == smooth_robustness(x, ϕ_always)
+
+# ╔═╡ dded9b53-c9d4-47b1-9cd2-ca5a3cd245fb
+@test robustness(x, ϕ_always) == ρ(x, ϕ_always)
+
 # ╔═╡ c5101fe8-6617-434e-817e-eeac1caa3170
 q = @formula ◊(xᵢ->μ(xᵢ) > 0.5)
 
@@ -850,6 +856,8 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═f7e01cce-635a-4897-923e-f62127e784ef
 # ╠═8a33e8ee-5ba7-4a00-9c0b-a2722f3d0c39
 # ╠═eb2a96f7-7635-49de-a967-604658d4905d
+# ╠═e28af833-ebc3-4767-a5ba-0c2f5dbbc028
+# ╠═dded9b53-c9d4-47b1-9cd2-ca5a3cd245fb
 # ╟─1681bbe3-0327-495c-a3e4-0fc34cc9f298
 # ╠═c5101fe8-6617-434e-817e-eeac1caa3170
 # ╠═7ea907bd-d46e-42dc-8bfa-12264f9935b7
