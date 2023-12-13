@@ -268,7 +268,7 @@ md"""
 """
 
 # ╔═╡ ba0a977e-3dea-4b87-900d-d7e2e4281f79
-global W = Inf # i.e., default to returning the mean
+global W = 1
 
 # ╔═╡ 053e0902-559f-4ac9-98dc-4b59f11e4056
 function logsumexp(x)

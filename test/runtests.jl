@@ -550,7 +550,7 @@ end
 @test smoothmax(sm; w=Inf) == mean(sm)
 
 # ╔═╡ e28af833-ebc3-4767-a5ba-0c2f5dbbc028
-@test robustness(x, ϕ_always; w=Inf) == smooth_robustness(x, ϕ_always)
+@test robustness(x, ϕ_always; w=1) == smooth_robustness(x, ϕ_always)
 
 # ╔═╡ dded9b53-c9d4-47b1-9cd2-ca5a3cd245fb
 @test robustness(x, ϕ_always) == ρ(x, ϕ_always)
