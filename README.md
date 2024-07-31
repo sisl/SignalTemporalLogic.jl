@@ -39,10 +39,14 @@ x = [1, 2, 3, 4, -9, -8]
 ϕ = @formula ◊(xₜ -> xₜ > 0.5)
 
 # Robustness
+ρ(x, ϕ)
+# Outputs: 3.5
+
+# Robustness gradient
 ∇ρ(x, ϕ)
 # Outputs: [0.0  0.0  0.0  1.0  0.0  0.0]
 
-# Smooth approximate robustness
+# Smooth robustness gradient
 ∇ρ̃(x, ϕ)
 # Outputs: [-0.0478501  -0.0429261  0.120196  0.970638  -1.67269e-5  -4.15121e-5]
 ```
