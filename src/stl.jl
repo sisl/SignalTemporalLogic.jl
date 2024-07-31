@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.29
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -86,6 +86,14 @@ begin
 	∨(ϕ1::Formula, ϕ2::Formula) = xᵢ->ϕ1(xᵢ) ∨ ϕ2(xᵢ)
 end
 
+# ╔═╡ 474a0852-ebd0-4483-9627-f9669f17fab6
+md"""
+## Mapping over time
+"""
+
+# ╔═╡ 4b6a17a2-a914-4408-ac5a-a51ed9f126ce
+Base.map(ϕ::Formula, x::AbstractArray) = map(t->ϕ(x[t:end]), eachindex(x))
+
 # ╔═╡ 50e69922-f07e-48dd-981d-d68c8cd07f7f
 md"""
 # Robustness
@@ -127,6 +135,23 @@ begin
 	(ϕ::Atomic)(x) = ϕ.value
 	ρ(xₜ, ϕ::Atomic) = ϕ.ρ_bound
 	ρ̃(xₜ, ϕ::Atomic; kwargs...) = ρ(xₜ, ϕ)
+end
+
+# ╔═╡ 75b654ee-e8a8-4d70-bf9b-f8ddf20847a4
+md"""
+## Atomic Function
+"""
+
+# ╔═╡ f3813cc2-af90-4710-9afb-e56a3b568338
+begin
+	Base.@kwdef mutable struct AtomicFunction <: Formula
+		f::Function # ℝⁿ → 𝔹
+		ρ_max = Inf
+	end
+
+	(ϕ::AtomicFunction)(x) = map(xₜ->all(xₜ), ϕ.f(x))
+	ρ(xₜ, ϕ::AtomicFunction) = xₜ ? ϕ.ρ_max : -ϕ.ρ_max
+	ρ̃(xₜ, ϕ::AtomicFunction; kwargs...) = ρ(xₜ, ϕ)
 end
 
 # ╔═╡ 296c7321-db0d-4878-a4d9-6e2b6ee76e4e
@@ -561,10 +586,7 @@ function parse_formula(ex)
 	if ex isa Formula
 		return ex
 	elseif ex isa Symbol
-		local sym = string(ex)
-		return quote
-			error("Symbol `$($sym)` needs to be a Formula type.")
-		end
+		return esc(ex) # assume the Symbol is a @formula that is already parsed
 	elseif is_junction(ex.head)
 		return parse_junction(ex)
 	else
@@ -627,6 +649,8 @@ function parse_formula(ex)
 						return :(Disjunction(FlippedPredicate($(esc(μ)), $c), Predicate($(esc(μ)), $c)))
 					elseif is_junction(formula_type)
 						return parse_junction(ex)
+					elseif ex.head == :(->)
+						return :(AtomicFunction(f=$(esc(ex))))
 					else
 						error("""
 						No formula parser for:
@@ -636,7 +660,9 @@ function parse_formula(ex)
 							core.head = $(core.head)
 							core.args = $(core.args)
 							body = $body
-							ex = $ex""")
+							ex = $ex
+							ex.head = $(ex.head)
+							ex.args = $(ex.args)""")
 					end
 				end
             end
@@ -1287,6 +1313,8 @@ version = "17.4.0+0"
 # ╠═5c454ece-de05-4cce-9996-037df54024e5
 # ╟─8c2a500b-8d62-48a3-ac22-b6466858eef9
 # ╠═dc6bec3c-4ca0-457e-886d-0b2a3f8845e8
+# ╟─474a0852-ebd0-4483-9627-f9669f17fab6
+# ╠═4b6a17a2-a914-4408-ac5a-a51ed9f126ce
 # ╟─50e69922-f07e-48dd-981d-d68c8cd07f7f
 # ╠═d57941cf-655b-45f8-b5e2-b39d3cfeb9fb
 # ╠═5c1e16b3-1b3c-4c7a-a484-44b935eaa2a9
@@ -1295,6 +1323,8 @@ version = "17.4.0+0"
 # ╠═851997de-b0f5-4273-a15b-0e1440c2e6cd
 # ╠═916d7fae-6599-41c6-b909-4e1dd66e48f1
 # ╠═c1e17481-91c3-430f-99f3-1b328ec31417
+# ╟─75b654ee-e8a8-4d70-bf9b-f8ddf20847a4
+# ╠═f3813cc2-af90-4710-9afb-e56a3b568338
 # ╟─296c7321-db0d-4878-a4d9-6e2b6ee76e4e
 # ╟─0158daf7-bc8d-4764-81b1-b5e73e02dc8a
 # ╠═1ec0bddb-28d8-420b-856d-2c1ed70a77a4

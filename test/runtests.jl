@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.29
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -85,8 +85,11 @@ $$\exists i: \psi(x_i) \wedge \bigl(\forall j < i: \phi(x_j)\bigr)$$
 # ╔═╡ 1d0e135e-6cc3-422e-ba44-fee53cc1965f
 μ(x) = x
 
-# ╔═╡ 2305b206-0c6d-440d-81b7-0f485cc8a6a8
-# U = @formula 𝒰(_ϕ, _ψ); NOTE: does not work like this.
+# ╔═╡ 4efe597d-a2b3-4a2e-916a-323e4c86a823
+x1 = [0.001, 1, 2, 3, 4, 5, 6, 7, -8, -9, -10];
+
+# ╔═╡ b9643ca4-58aa-4902-a103-2c8140eb6e74
+x1
 
 # ╔═╡ 2d65db96-f8cf-4ccc-b4f5-1c642249ed7b
 md"""
@@ -439,35 +442,25 @@ _ϕ(x[1])
 # ╔═╡ 14f52f51-ec7b-4a30-af2d-4dfeed8618c0
 _ψ = @formula xₜ -> -μ(xₜ) > 0;
 
-# ╔═╡ 2c8c423e-ed23-4be9-90f6-d96e9ca8c3cb
-U = @formula 𝒰(xₜ -> μ(xₜ) > 0, xₜ -> -μ(xₜ) > 0);
+# ╔═╡ 2305b206-0c6d-440d-81b7-0f485cc8a6a8
+U = @formula 𝒰(_ϕ, _ψ);
 
 # ╔═╡ ba9e4d5a-e791-4f04-9be1-bbdd5de09d6c
-U([0.1, 1, 2, 3, -10, -9, -8])
+@test U([0.1, 1, 2, 3, -10, -9, -8])
 
 # ╔═╡ d79856be-3c2f-4ff7-a9c6-94a3a4bf8ffe
-U(x)
-
-# ╔═╡ 4efe597d-a2b3-4a2e-916a-323e4c86a823
-begin
-	x1 = [0.001, 1, 2, 3, 4, 5, 6, 7, -8, -9, -10]
-	ϕ1 = @formula xᵢ -> xᵢ > 0
-	ψ1 = @formula xᵢ -> -xᵢ > 0 # xᵢ < 0
-end;
-
-# ╔═╡ b9643ca4-58aa-4902-a103-2c8140eb6e74
-x1
+@test U(x)
 
 # ╔═╡ 562d3796-bf48-4260-9683-0999f628b43c
-U(x1)
+@test U(x1)
 
 # ╔═╡ 482600d2-e1a7-446c-934d-3234885ba14c
 begin
 	time = 1:length(x1)
 	steptype = :steppost
-	plot(time, miss(ϕ1.(x1)) .+ 1, lw=5, c=:blue, lab=false, lt=steptype)
-	plot!(time, miss(ψ1.(x1)), lw=5, c=:red, lab=false, lt=steptype)
-	plot!(time, .∨(ϕ1.(x1), ψ1.(x1)) .- 1, lw=5, c=:purple, lab=false, lt=steptype)
+	plot(time, miss(_ϕ.(x1)) .+ 1, lw=5, c=:blue, lab=false, lt=steptype)
+	plot!(time, miss(_ψ.(x1)), lw=5, c=:red, lab=false, lt=steptype)
+	plot!(time, map(U, x1) .- 1, lw=5, c=:purple, lab=false, lt=steptype)
 	plot!(ytickfont=12, xtickfont=12)
 
 	yticks!(0:2, [L"\phi \mathcal{U} \psi", L"\psi", L"\phi"])
@@ -510,6 +503,27 @@ begin
 	plot!(1:length(x2), vec(∇ρ̃(x2, ϕ_until)), label="soft ∇ρ̃(x,ϕ; w=1)")
 	plot!(1:length(x2), vec(∇ρ̃(x2, ϕ_until; w=2)), label="soft ∇ρ̃(x,ϕ; w=2)")
 end
+
+# ╔═╡ d4bc34f1-bbee-4f4f-9599-6294c013f495
+function until_local_test()
+	__ψ = @formula xₜ->xₜ[1]
+	__ϕ = @formula xₜ->xₜ[2]
+	__until = @formula 𝒰(__ψ, __ϕ)
+	x = [
+	    [false, false],
+	    [false, false],
+	    [true, false],
+	    [true, false],
+	    [true, true],
+	    [false, true],
+	    [false, true],
+	    [false, true],
+	]
+	return map(__until, x)
+end
+
+# ╔═╡ 5ecad5e6-48f3-43d5-921e-6dfbdb516bf4
+@test until_local_test() == [false, false, true, true, true, true, true, true]
 
 # ╔═╡ ab72fec1-8266-4064-8a58-6de08b318ada
 begin
@@ -701,14 +715,15 @@ end
 # ╔═╡ 5ccc7a0f-c3b2-4429-9bd5-d7fd9bcb97b5
 @test begin
 	local upright = @formula s -> abs(s[1]) < π / 4
-	local ψ = @eval @formula □($upright) # input anonymous function MUST be a Formula
+	local ψ = @formula □(upright)
 	ψ([π/10]) && !(ψ([π/3]))
 end
 
 # ╔═╡ e2313bcd-dd8f-4ffd-ac1e-7e08304c37b5
-@test_throws "Symbol " begin
-	local variable
+@test begin
+	local variable = @formula x->x > 0
 	local ψ = @formula □(variable)
+	true
 end
 
 # ╔═╡ aea96bbd-d006-4933-a8cb-5165a0158499
@@ -816,7 +831,6 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═0f661852-d1b4-4e48-946f-33c111230047
 # ╠═14f52f51-ec7b-4a30-af2d-4dfeed8618c0
 # ╠═2305b206-0c6d-440d-81b7-0f485cc8a6a8
-# ╠═2c8c423e-ed23-4be9-90f6-d96e9ca8c3cb
 # ╠═b74bd2ee-eb33-4c41-b3b0-e2544166a8ae
 # ╠═ba9e4d5a-e791-4f04-9be1-bbdd5de09d6c
 # ╠═d79856be-3c2f-4ff7-a9c6-94a3a4bf8ffe
@@ -837,6 +851,8 @@ IS_NOTEBOOK && TableOfContents()
 # ╠═d32bf800-51d5-455f-ab50-91bb31f67e83
 # ╠═c738c26d-10a7-488a-976e-cc5f69fc4526
 # ╠═26a3441c-9128-46c6-8b5a-6858d642509c
+# ╠═d4bc34f1-bbee-4f4f-9599-6294c013f495
+# ╠═5ecad5e6-48f3-43d5-921e-6dfbdb516bf4
 # ╟─b30d0b1e-493b-48c0-b492-5f7dd2ad872b
 # ╟─ce82cf55-0e32-412e-b6c6-f95563796e7e
 # ╠═ab72fec1-8266-4064-8a58-6de08b318ada
