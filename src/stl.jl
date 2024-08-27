@@ -605,7 +605,10 @@ function parse_formula(ex)
             ϕ = parse_formula(ϕ_ex)
             ψ = parse_formula(ψ_ex)
             return :(Until($ϕ, $ψ, $I))
-        else
+		elseif var ∈ [:¬, :!]
+			ϕ_inner = parse_formula(strip_negation(ex))
+			return :(Negation($ϕ_inner))
+		else
 			core = body.head == :block ? body.args[end] : body
 			if typeof(core) == Bool
 				return :(Atomic(value=$(esc(core))))
