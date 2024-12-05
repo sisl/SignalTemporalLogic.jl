@@ -7,7 +7,7 @@ This package can define _signal temporal logic_ (STL) formulas using the `@formu
 
 ## Installation
 ```julia
-] add https://github.com/sisl/SignalTemporalLogic.jl
+] add SignalTemporalLogic
 ```
 
 ## Examples
