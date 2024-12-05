@@ -10,9 +10,9 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-InteractiveUtils = "1.11.0"
-Markdown = "1.11.0"
-PlutoUI = "0.7.60"
+InteractiveUtils = "1"
+Markdown = "1"
+PlutoUI = "0.7"
 Zygote = "0.6"
 julia = "1"
 
