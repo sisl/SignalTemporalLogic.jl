@@ -5,6 +5,8 @@ This package can define _signal temporal logic_ (STL) formulas using the `@formu
 [![Build Status](https://github.com/sisl/SignalTemporalLogic.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/sisl/SignalTemporalLogic.jl/actions/workflows/CI.yml)
 <!-- [![codecov](https://codecov.io/gh/sisl/SignalTemporalLogic.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/sisl/SignalTemporalLogic.jl) -->
 
+Here's a [quick video](https://youtu.be/v4vRd68oT3A) about the package.
+
 ## Installation
 ```julia
 ] add SignalTemporalLogic
